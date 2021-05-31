@@ -49,6 +49,18 @@ class Blockchain:
             block.hash = calculated_hash
             self.add_block(block)
 
+    def is_valid(self):
+        for count, block in enumerate(self.chain):
+            if count == 0:
+                if hash_block_data(block)[:self.difficulty] != '0' * self.difficulty:
+                    return False
+                else:
+                    continue
+            if block.previous_hash != hash_block_data(self.chain[count - 1]) or \
+                    hash_block_data(block)[:self.difficulty] != '0' * self.difficulty:
+                return False
+        return True
+
 
 def main():
     blockchain = Blockchain()
@@ -58,6 +70,9 @@ def main():
 
     for block in blockchain.chain:
         print(block)
+
+    blockchain.chain[2].data = "Manipulated Data"
+    print(blockchain.is_valid())
 
 
 if __name__ == '__main__':
