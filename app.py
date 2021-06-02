@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_mysqldb import MySQL
 from config import _mysql_user, _mysql_password
 
@@ -15,7 +15,7 @@ mysql = MySQL(app)
 
 @app.route('/')
 def home():
-    return 'Testing...!'
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
