@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block metas %}
+{{super()}}
+<meta name="description"
+      content="Dashboard of Jio coin- truly decentralized cryptocurrency coded in Python- account holders">
+<meta name="keywords" content="Cryptocurrency, Blockchain, Python, Dashboard, Members">
+{% endblock %}
+{% block title %}
+Jio Coin- Dashboard
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 900px; margin-top: 120px;">
+  {% block flash %}
+  <div class="container text-center">
+    {{super()}}
+  </div>
+  {% endblock %}
+  {% block page_content %}
+  <h1>Welcome, {{ session['name'] }}</h1>
+  {% endblock %}
+  {%- block footer %}
+  {{super()}}
+  {%- endblock footer %}
+</div>
+{% endblock %}

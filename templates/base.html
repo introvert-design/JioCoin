@@ -1,0 +1,24 @@
+{% extends "bootstrap/base.html" %}
+{% block html_attribs %}
+lang="en"
+{% endblock %}
+{% block metas %}
+<meta charset="UTF-8">
+{{super()}}
+<meta name="author" content="The Introvert-Design">
+{% endblock %}
+{%- block content %}
+  {% block flash %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+  <div class="alert alert-{{ category }}">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+  </div>
+  {% endfor %}
+  {% endblock %}
+  {{super()}}
+  {% block page_content %}{% endblock %}
+  {%- block footer %}
+  <footer class="mt-5 text-muted">&copy; <script>document.write( new Date().getFullYear() );</script> Jio Crypto Services.</footer>
+  {%- endblock footer %}
+{%- endblock content %}
