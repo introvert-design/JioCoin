@@ -8,18 +8,99 @@
 {% block title %}
 Jio Coin- Dashboard
 {% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+{{super()}}
+<style>
+  .table-bordered > tbody > tr > td {
+    border: 1px solid transparent;
+  }
+  .nav-link {
+    float: right;
+    position: relative;
+    top: 60px;
+    padding-right: 20px;
+  }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 900px; margin-top: 120px;">
+<div class="container" style="max-width: 1400px;">
+  <div class="row">
+    <a class="brand" href="#">
+      <img src="{{url_for('static', filename='images/logo.png')}}" alt="Jio Coin Logo" width="100" height="100">
+    </a>
+    <a class="nav-link" href="logout">Logout</a>
+    <a class="nav-link" href="transaction" style="right: 20px;">Send Money</a>
+  </div>
   {% block flash %}
-  <div class="container text-center">
+  <div class="container">
     {{super()}}
   </div>
   {% endblock %}
   {% block page_content %}
-  <h1>Welcome, {{ session['name'] }}</h1>
+  <div class="row">
+    {% if session['url'] == '/register' %}
+    <h1>Welcome, {{ session['name'] }}</h1>
+    {% elif session['url'] == '/login' %}
+    <h1>Welcome back, {{ session['name'] }}</h1>
+    {% else %}
+    <h1>Hello, {{ session['name'] }}</h1>
+    {% endif %}
+    <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
+  </div>
+  <hr>
+  <h3 class="h3">Jio Coin Blockchain</h3>
+  <table id="table"
+         data-height="660"
+         data-toggle="table"
+         data-show-pagination-switch="true"
+         data-show-fullscreen="true"
+         data-pagination="true">
+    <thead>
+      <tr>
+        <th scope="col" rowspan="2" class="text-center" data-valign="middle">Block#</th>
+        <th scope="col" rowspan="2" class="text-center" data-valign="middle">Hash</th>
+        <th scope="col" colspan="3" class="text-center">Transactions</th>
+      </tr>
+      <tr>
+        <th scope="col">Sender</th>
+        <th scope="col">Recipient</th>
+        <th scope="col">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for block in chain %}
+      {% set tnxs = block.__dict__['transactions'] %}
+      {% set count = loop.index %}
+      {% if count%2 == 0 %}
+        {% set bgcolor = "#ddd" %}
+      {% else %}
+        {% set bgcolor = "#fff" %}
+      {% endif %}
+      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }};">
+        <td rowspan="{{ tnxs|length }}" style="border-left-color: #ddd;">{{ block.index }}</td>
+        <td rowspan="{{ tnxs|length }}" class="text-left">{{ block.hash }}</td>
+        <td>{{ tnxs[0]['sender'] }}</td>
+        <td>{{ tnxs[0]['recipient'] }}</td>
+        <td style="border-right-color: #ddd;">{{ tnxs[0]['amount'] }}</td>
+      </tr>
+      {% for tnx in tnxs[1:] %}
+      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }}; border-color: transparent;">
+        <td>{{ tnx['sender'] }}</td>
+        <td>{{ tnx['recipient'] }}</td>
+        <td style="border-right-color: #ddd;">{{ tnx['amount'] }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+    </tbody>
+  </table>
   {% endblock %}
   {%- block footer %}
   {{super()}}
   {%- endblock footer %}
 </div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
 {% endblock %}

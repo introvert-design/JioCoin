@@ -1,28 +1,28 @@
-from app import mysql
+from helper import is_json
 
 
 class Table:
-    def __init__(self, table_name, *args):
+    def __init__(self, table_name, mysql, *args):
         self.table_name = table_name
+        self.mysql = mysql
         self.columns = args
         self.create_new_table()
 
-    @staticmethod
-    def sql_operations(operation, query):
-        cur = mysql.connection.cursor()
+    def sql_operations(self, operation, query):
+        cur = self.mysql.connection.cursor()
         cur.execute(query)
         if operation == 'get_all':
             result = cur.fetchall()
         elif operation == 'get_one':
             result = cur.fetchone()
         else:
-            mysql.connection.commit()
+            self.mysql.connection.commit()
             result = True
         cur.close()
         return result
 
     def is_new_table(self):
-        cur = mysql.connection.cursor()
+        cur = self.mysql.connection.cursor()
 
         try:
             cur.execute(f'SELECT * FROM {self.table_name};')
@@ -38,7 +38,9 @@ class Table:
 
     def create_new_table(self):
         if self.is_new_table():
-            column_headers = ', '.join([f'{column_name} varchar({size})' for column_name, size in self.columns])
+            column_headers = ', '.join([f'{column_name} {data_type}({size})' if not data_type == 'JSON'
+                                        else f'{column_name} {data_type}'
+                                        for column_name, data_type, size in self.columns])
             query = f'CREATE TABLE {self.table_name} ({column_headers});'
             self.sql_operations('create', query)
 
@@ -53,7 +55,7 @@ class Table:
         return result
 
     def insert_data(self, *args):
-        values = ', '.join([f'"{arg}"' for arg in args])
+        values = ', '.join([f'"{arg}"' if not is_json(arg) else f"'{arg}'" for arg in args])
         query = f'INSERT INTO {self.table_name} VALUES ({values});'
         self.sql_operations('insert', query)
 

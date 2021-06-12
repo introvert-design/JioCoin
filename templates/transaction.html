@@ -2,11 +2,11 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% block metas %}
 {{super()}}
-<meta name="description" content="Create your Jio coin- truly decentralized cryptocurrency coded in Python- account">
-<meta name="keywords" content="Cryptocurrency, Blockchain, Python, Register, New account">
+<meta name="description" content="Send Jio coin- truly decentralized cryptocurrency coded in Python- with ease">
+<meta name="keywords" content="Cryptocurrency, Blockchain, Python, Transfer, Send">
 {% endblock %}
 {% block title %}
-Jio Coin- Create Account
+Jio Coin- Transfer crypto
 {% endblock %}
 {% block content %}
 <div class="container text-center" style="max-width: 400px; margin-top: 120px;">
@@ -19,26 +19,29 @@ Jio Coin- Create Account
        alt="Jio Coin Logo"
        width="200"
        height="200">
-  <h3 class="h3 mb-3 fw-normal">Create your Jiocoin account</h3>
+  <h4 class="h4 mb-3 fw-normal">Send money in a hassle-free manner</h4>
+  <hr>
+  <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
   <hr>
   <form action="" method="post" class="form text-left" role="form">
     {{ form.hidden_tag() }}
     {{ wtf.form_errors(form, hiddens="only") }}
-    {{ wtf.form_field(form.name, class='form-control', placeholder='John Doe') }}
     {{ wtf.form_field(form.email, class='form-control', placeholder='john.doe@example.com') }}
-    {{ wtf.form_field(form.password, class='form-control', placeholder='Password (8 - 20 characters)') }}
-    {{ wtf.form_field(form.confirm, class='form-control', placeholder='Retype password') }}
+    {{ wtf.form_field(form.amount, class='form-control', placeholder='XXXX.XX') }}
     <div class="d-grid gap-2">
       {{ wtf.form_field(form.submit, class='btn btn-primary mt-5', role='button',
         style='width: 100%; margin-top: 10px;') }}
     </div>
   </form>
   <hr>
-  <div class="login">
-    <p>Already have a Jiocoin account?
-      <a href= "login">Sign in</a>
-    </p>
+  <div class="dashboard">
+      <a href= "dashboard">Go to dashboard</a>
   </div>
+  <br>
+  <div class="logout">
+      <a href= "logout">Logout</a>
+  </div>
+  <br>
   {% endblock %}
   {%- block footer %}
   {{super()}}

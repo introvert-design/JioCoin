@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, validators
+from wtforms import StringField, FloatField, SubmitField, PasswordField, validators
 
 
 class RegistrationForm(FlaskForm):
@@ -32,3 +32,15 @@ class LoginForm(FlaskForm):
         validators.DataRequired(),
     ])
     submit = SubmitField('Login')
+
+
+class TransactionForm(FlaskForm):
+    email = StringField('Recipient Email Address', [
+        validators.DataRequired(),
+        validators.Email()
+    ])
+    amount = FloatField('Amount', [
+        validators.NumberRange(min=0.00, message='Invalid input. Enter a valid amount !'),
+        validators.DataRequired(message='Invalid input. Enter a valid amount !')
+    ])
+    submit = SubmitField('Send')
