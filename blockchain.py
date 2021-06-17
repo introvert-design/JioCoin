@@ -3,7 +3,7 @@ from json import dumps, loads
 
 from transaction import Transaction
 from block import Block
-from helper import hash_block_data
+from helper import hash_block_data, ordered_dict
 from sql_util import Table
 
 MINING_REWARD = 10.0
@@ -45,25 +45,25 @@ class Blockchain:
         self.save_data()
 
     def mine_block(self):
+        if len(self.chain) > 0:
+            if not self.is_valid():
+                return False
         try:
             previous_hash = self.chain[-1].__dict__['hash']
         except IndexError:
             previous_hash = '0' * 62 + 'x0'
         self.open_transactions.append(Transaction('Jiocoin', self.host, MINING_REWARD).__dict__)
-        transactions = self.open_transactions[:]
-        block = Block(len(self.chain) + 1, previous_hash, time(), transactions)
+        transactions = ordered_dict(self.open_transactions[:])
+        block = Block(len(self.chain) + 1, previous_hash, str(time()), transactions)
         while not hash_block_data(block)[:self.difficulty] == '0' * self.difficulty:
             block.nonce += 1
-            block.timestamp = time()
+            block.timestamp = str(time())
         else:
             block.hash = hash_block_data(block)
             self.chain.append(block)
             self.open_transactions = []
             self.save_data()
-        if self.is_valid():
             return True
-        else:
-            return False
 
     def is_valid(self):
         for count, block in enumerate(self.chain):
@@ -80,7 +80,7 @@ class Blockchain:
     def load_data(self):
         blockchain = []
         blockchain_db = Table("blockchain", self.mysql, ("id", "INT", 100), ("hash", "VARCHAR", 100),
-                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "FLOAT", 6),
+                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "VARCHAR", 20),
                               ("transactions", "JSON", ""))
         for row in blockchain_db.get_all_data():
             block = Block(row['id'], row['previous_hash'], row['timestamp'], loads(row['transactions']),
@@ -98,7 +98,7 @@ class Blockchain:
 
     def save_data(self):
         blockchain_db = Table("blockchain", self.mysql, ("id", "INT", 100), ("hash", "VARCHAR", 100),
-                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "FLOAT", 6),
+                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "VARCHAR", 20),
                               ("transactions", "JSON", ""))
         blockchain_db.delete_all_data()
         for block in self.chain:

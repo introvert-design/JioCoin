@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_mysqldb import MySQL
 from flask_bootstrap import Bootstrap
 from passlib.hash import sha256_crypt
@@ -76,15 +76,6 @@ def register():
     return render_template('registration.html', form=form)
 
 
-@app.route('/dashboard', methods=['GET'])
-@is_loggedin
-def dashboard():
-    blockchain = Blockchain(session['email'], mysql)
-    balance = blockchain.check_balance()
-
-    return render_template('dashboard.html', session=session, balance=balance, chain=blockchain.chain)
-
-
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -118,6 +109,16 @@ def logout():
     session.clear()
     flash('User successfully logged out !', 'success')
     return redirect(url_for('login'))
+
+
+@app.route('/dashboard', methods=['GET'])
+@is_loggedin
+def dashboard():
+    blockchain = Blockchain(session['email'], mysql)
+    balance = blockchain.check_balance()
+
+    return render_template('dashboard.html', session=session, balance=balance, chain=blockchain.chain,
+                           open_transactions=blockchain.open_transactions)
 
 
 @app.route('/transaction', methods=['GET', 'POST'])
@@ -154,6 +155,18 @@ def transaction():
         return redirect(url_for('transaction'))
 
     return render_template('transaction.html', form=form, balance=balance)
+
+
+@app.route('/mine', methods=['POST'])
+@is_loggedin
+def mine():
+    blockchain = Blockchain(session['email'], mysql)
+    if blockchain.mine_block():
+        flash('Block successfully mined', 'success')
+        return redirect(url_for('dashboard'))
+    else:
+        flash('Mining failed.', 'danger')
+        return redirect(url_for('dashboard'))
 
 
 @app.route('/new_wallet', methods=['GET'])

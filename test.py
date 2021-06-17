@@ -1,8 +1,9 @@
 from blockchain import Blockchain
+from app import mysql
 
 
 def main():
-    blockchain = Blockchain('Geo')
+    blockchain = Blockchain('Geo', mysql)
     blockchain.mine_block()
     blockchain.add_transactions('Geo', 'Maria', 2.4)
     blockchain.add_transactions('Geo', 'Jeff', 5.8)

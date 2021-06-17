@@ -48,16 +48,19 @@ Jio Coin- Dashboard
   {% endif %}
   <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
   <hr>
-  {% if chain|length == 0 %}
-    {% set prop = "none" %}
-  {% endif %}
-  <h3 class="h3" style="display: {{ prop }};">Jio Coin Blockchain</h3>
+  <h3 class="h3">Jio Coin Blockchain</h3>
+  <button type="button" class="btn btn-primary" id="btn-mine" style="margin-top: 10px;">
+    Mine block
+  </button>
+  <button type="button" class="btn btn-primary" id="btn-sync" style="margin-top: 10px;">
+    Sync tables
+  </button>
   <table id="table"
+         data-height="560"
          data-toggle="table"
          data-show-pagination-switch="true"
          data-show-fullscreen="true"
-         data-pagination="true"
-         style="display: {{ prop }};">
+         data-pagination="true">
     <thead>
       <tr>
         <th scope="col" rowspan="2" class="text-center" data-valign="middle">Block#</th>
@@ -87,7 +90,7 @@ Jio Coin- Dashboard
         <td style="border-right-color: #ddd;">{{ tnxs[0]['amount'] }}</td>
       </tr>
       {% for tnx in tnxs[1:] %}
-      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }}; border-color: transparent;">
+      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }};">
         <td>{{ tnx['sender'] }}</td>
         <td>{{ tnx['recipient'] }}</td>
         <td style="border-right-color: #ddd;">{{ tnx['amount'] }}</td>
@@ -96,9 +99,38 @@ Jio Coin- Dashboard
     {% endfor %}
     </tbody>
   </table>
+  <hr>
+  <h3 class="h3">Open transactions</h3>
+  <table id="table-open-transactions"
+         data-height="320"
+         data-toggle="table"
+         data-show-pagination-switch="true"
+         data-show-fullscreen="true"
+         data-pagination="true">
+    <thead>
+      <tr>
+        <th scope="col" class="text-center">Tnx#</th>
+        <th scope="col" class="text-center">Sender</th>
+        <th scope="col" class="text-center">Recipient</th>
+        <th scope="col" class="text-center">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for transaction in open_transactions %}
+      {% set count = loop.index %}
+      <tr class="tr-class-{{ count }}">
+        <td style="border-left-color: #ddd;">{{ count }}</td>
+        <td class="text-left">{{ transaction.sender }}</td>
+        <td class="text-left">{{ transaction.recipient }}</td>
+        <td class="text-left" style="border-right-color: #ddd;">{{ transaction.amount }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <hr>
   {% endblock %}
   {%- block footer %}
-  <footer class="mt-5 text-muted" style="position: absolute; bottom: 0">
+  <footer class="mt-5 text-muted">
     &copy;
     <script>document.write( new Date().getFullYear() );</script>
     Jio Crypto Services.
@@ -111,45 +143,14 @@ Jio Coin- Dashboard
 <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
 <script>
   $(function() {
-    $('#message-success').hide();
-    $('#message-fail').hide();
-    $('.h3.keys').hide();
-    $('#btn-create-wallet').on('click', function() {
-      $.post('/wallet',function(data) {
-        if (data.category === 'success') {
-          $('.h3.keys').show();
-          $('#private-key').html(data.private_key);
-          $('#public-key').html(data.public_key);
-          var btn_close = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
-          $('#message-success').html(data.message);
-          $('#message-success').prepend(btn_close);
-          $('#message-success').show();
-          $('#btn-create-wallet').hide();
-        }
-        if (data.category === 'danger') {
-          $('#message-fail').html(data.message);
-          $('#message-fail').prepend(btn_close);
-          $('#message-fail').show();
-        }
+    $('#btn-mine').on('click', function() {
+      $.post('/mine',function(data) {
+        window.location.reload();
       });
     });
-    $('#btn-load-wallet').on('click', function() {
-      $.get('/wallet',function(data) {
-        if (data.category === 'success') {
-          $('.h3.keys').show();
-          $('#private-key').html(data.private_key);
-          $('#public-key').html(data.public_key);
-          var btn_close = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
-          $('#message-success').html(data.message);
-          $('#message-success').prepend(btn_close);
-          $('#message-success').show();
-          $('#btn-load-wallet').hide();
-        }
-        if (data.category === 'danger') {
-          $('#message-fail').html(data.message);
-          $('#message-fail').prepend(btn_close);
-          $('#message-fail').show();
-        }
+    $('#btn-sync').on('click', function() {
+      $.get('/dashboard',function(data) {
+        window.location.reload();
       });
     });
   });
