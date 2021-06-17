@@ -8,6 +8,7 @@ from config import _mysql_user, _mysql_password, _secret_key
 from sql_util import *
 from forms import RegistrationForm, LoginForm, TransactionForm
 from blockchain import Blockchain
+from wallet import Wallet
 
 
 app = Flask(__name__)
@@ -34,6 +35,8 @@ def is_loggedin(func):
                 flash('Please login to access the dashboard !', 'warning')
             elif func.__name__ == 'transaction':
                 flash('Please login to access the transaction page !', 'warning')
+            else:
+                flash('Unauthorized !', 'warning')
             return redirect(url_for('login'))
     return wrap
 
@@ -44,13 +47,17 @@ def login_user(email, users, url):
     session['logged_in'] = True
     session['name'] = user['name']
     session['email'] = user['email']
+    session['public_key'] = user['public_key']
+    session['has_wallet'] = user['has_wallet']
     session['url'] = url
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm(request.form)
-    users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100))
+
+    users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
+                  ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
 
     if form.validate_on_submit():
         name = form.name.data
@@ -58,7 +65,7 @@ def register():
 
         if users.is_new_user(email):
             password = sha256_crypt.encrypt(form.password.data)
-            users.insert_data(name, email, password)
+            users.insert_data(name, email, password, 'NULL', 0)
             flash('User account created successfully. You are now logged in !', 'success')
             login_user(email, users, url_for('register'))
             return redirect(url_for('dashboard'))
@@ -69,7 +76,7 @@ def register():
     return render_template('registration.html', form=form)
 
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET'])
 @is_loggedin
 def dashboard():
     blockchain = Blockchain(session['email'], mysql)
@@ -87,7 +94,9 @@ def login():
         email = form.email.data
         input_password = form.password.data
 
-        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100))
+        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
+                      ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+
         user = users.get_one('email', email)
         if user is None:
             flash('User account not found. Create an account today !', 'warning')
@@ -126,8 +135,13 @@ def transaction():
         recipient = form.email.data
         amount = form.amount.data
 
-        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100))
-        if sender == recipient:
+        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
+                      ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+
+        user = users.get_one('email', sender)
+        if user['has_wallet'] == 0:
+            flash('Wallet not found. Create wallet to send money!', 'danger')
+        elif sender == recipient:
             flash('Invalid transaction !', 'danger')
         elif users.is_new_user(recipient):
             flash('Recipient user account does not exists !', 'danger')
@@ -140,6 +154,53 @@ def transaction():
         return redirect(url_for('transaction'))
 
     return render_template('transaction.html', form=form, balance=balance)
+
+
+@app.route('/new_wallet', methods=['GET'])
+@is_loggedin
+def new_wallet():
+    if session['has_wallet'] == 1:
+        return redirect(url_for('load_wallet'))
+
+    return render_template('new_wallet.html')
+
+
+@app.route('/create_wallet', methods=['GET', 'POST'])
+@is_loggedin
+def create_wallet():
+    if session['has_wallet'] == 0:
+        wallet = Wallet()
+        wallet.create_keys()
+
+        email = session['email']
+
+        if wallet.save_keys(mysql, email):
+            users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50),
+                          ("password", "VARCHAR", 100), ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+            login_user(email, users, url_for('create_wallet'))
+            flash('Wallet created and successfully saved.', 'success')
+            return redirect(url_for('load_wallet'))
+        else:
+            flash('Saving wallet failed !', 'danger')
+            session['has_wallet'] = 0
+            return redirect(url_for('new_wallet'))
+    else:
+        flash('Wallet already exists !', 'warning')
+        return redirect(url_for('load_wallet'))
+
+
+@app.route('/wallet', methods=['GET'])
+@is_loggedin
+def load_wallet():
+    if session['has_wallet'] == 1:
+        wallet = Wallet()
+        if not wallet.load_keys():
+            flash('Loading wallet failed !', 'danger')
+
+        return render_template('wallet.html', wallet=wallet)
+    else:
+        flash('Wallet not found. Create wallet !', 'danger')
+        return redirect(url_for('new_wallet'))
 
 
 if __name__ == '__main__':

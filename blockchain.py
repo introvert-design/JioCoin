@@ -44,9 +44,6 @@ class Blockchain:
         self.open_transactions.append(transaction.__dict__)
         self.save_data()
 
-    def add_block(self, block):  # possible change
-        self.chain.append(block)
-
     def mine_block(self):
         try:
             previous_hash = self.chain[-1].__dict__['hash']
@@ -60,9 +57,13 @@ class Blockchain:
             block.timestamp = time()
         else:
             block.hash = hash_block_data(block)
-            self.add_block(block)
+            self.chain.append(block)
             self.open_transactions = []
             self.save_data()
+        if self.is_valid():
+            return True
+        else:
+            return False
 
     def is_valid(self):
         for count, block in enumerate(self.chain):

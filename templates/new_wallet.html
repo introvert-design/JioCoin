@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block metas %}
+{{super()}}
+<meta name="description"
+      content="Create a Jio coin Wallet for the account holder to transact Jio coin securely">
+<meta name="keywords" content="Cryptocurrency, Blockchain, Python, Wallet, Members">
+{% endblock %}
+{% block title %}
+Jio Coin- Create Wallet
+{% endblock %}
+{% block styles %}
+{{super()}}
+<style>
+  .nav-link {
+    float: right;
+    position: relative;
+    top: 60px;
+    padding-right: 20px;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 1400px;">
+  <div class="row">
+    <a class="brand" href="#">
+      <img src="{{url_for('static', filename='images/logo.png')}}" alt="Jio Coin Logo" width="100" height="100">
+    </a>
+    <a class="nav-link" href="logout">Logout</a>
+    <a class="nav-link" href="transaction" style="right: 20px;">Transaction</a>
+    <a class="nav-link" href="dashboard" style="right: 40px;">Dashboard</a>
+  </div>
+  {% block flash %}
+  <div class="container">
+    {{super()}}
+  </div>
+  {% endblock %}
+  {% block page_content %}
+  <hr>
+  <h3 style="margin-top: 50px;">Create wallet to send money !</h3>
+  <button type="button" class="btn btn-primary" id="btn-create-wallet" style="margin-top: 10px;">
+    Create wallet
+  </button>
+  <hr>
+  {% endblock %}
+  {%- block footer %}
+  <footer class="mt-5 text-muted" style="position: absolute; bottom: 0">
+    &copy;
+    <script>document.write( new Date().getFullYear() );</script>
+    Jio Crypto Services.
+  </footer>
+  {%- endblock footer %}
+</div>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script>
+$(function() {
+  $('#btn-create-wallet').on('click', function() {
+    $.post('/create_wallet',function(data) {
+      window.location.reload();
+    });
+  });
+});
+</script>
+{% endblock %}

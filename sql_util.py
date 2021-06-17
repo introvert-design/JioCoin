@@ -38,8 +38,9 @@ class Table:
 
     def create_new_table(self):
         if self.is_new_table():
-            column_headers = ', '.join([f'{column_name} {data_type}({size})' if not data_type == 'JSON'
-                                        else f'{column_name} {data_type}'
+            column_headers = ', '.join([f'{column_name} {data_type}'
+                                        if data_type == 'JSON' or data_type == 'BOOL'
+                                        else f'{column_name} {data_type}({size})'
                                         for column_name, data_type, size in self.columns])
             query = f'CREATE TABLE {self.table_name} ({column_headers});'
             self.sql_operations('create', query)
@@ -67,6 +68,12 @@ class Table:
         query = f'DROP TABLE {self.table_name};'
         self.sql_operations('delete_all', query)
         self.create_new_table()
+
+    def update_table(self, condition, *args):
+        columns_to_be_updated = ', '.join([f'{column_name} = "{value}"' for column_name, value in args])
+        column, val = condition
+        query = f'UPDATE {self.table_name} SET {columns_to_be_updated} WHERE {column} = "{val}";'
+        self.sql_operations('update', query)
 
     def is_new_user(self, email):
         result = self.get_one('email', email)

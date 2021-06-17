@@ -30,7 +30,8 @@ Jio Coin- Dashboard
       <img src="{{url_for('static', filename='images/logo.png')}}" alt="Jio Coin Logo" width="100" height="100">
     </a>
     <a class="nav-link" href="logout">Logout</a>
-    <a class="nav-link" href="transaction" style="right: 20px;">Send Money</a>
+    <a class="nav-link" href="transaction" style="right: 20px;">Transaction</a>
+    <a class="nav-link" href="new_wallet" style="right: 40px;">Wallet</a>
   </div>
   {% block flash %}
   <div class="container">
@@ -38,24 +39,25 @@ Jio Coin- Dashboard
   </div>
   {% endblock %}
   {% block page_content %}
-  <div class="row">
-    {% if session['url'] == '/register' %}
-    <h1>Welcome, {{ session['name'] }}</h1>
-    {% elif session['url'] == '/login' %}
-    <h1>Welcome back, {{ session['name'] }}</h1>
-    {% else %}
-    <h1>Hello, {{ session['name'] }}</h1>
-    {% endif %}
-    <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
-  </div>
+  {% if session['url'] == '/register' %}
+  <h1>Welcome, {{ session['name'] }}</h1>
+  {% elif session['url'] == '/login' %}
+  <h1>Welcome back, {{ session['name'] }}</h1>
+  {% else %}
+  <h1>Hello, {{ session['name'] }}</h1>
+  {% endif %}
+  <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
   <hr>
-  <h3 class="h3">Jio Coin Blockchain</h3>
+  {% if chain|length == 0 %}
+    {% set prop = "none" %}
+  {% endif %}
+  <h3 class="h3" style="display: {{ prop }};">Jio Coin Blockchain</h3>
   <table id="table"
-         data-height="660"
          data-toggle="table"
          data-show-pagination-switch="true"
          data-show-fullscreen="true"
-         data-pagination="true">
+         data-pagination="true"
+         style="display: {{ prop }};">
     <thead>
       <tr>
         <th scope="col" rowspan="2" class="text-center" data-valign="middle">Block#</th>
@@ -96,11 +98,60 @@ Jio Coin- Dashboard
   </table>
   {% endblock %}
   {%- block footer %}
-  {{super()}}
+  <footer class="mt-5 text-muted" style="position: absolute; bottom: 0">
+    &copy;
+    <script>document.write( new Date().getFullYear() );</script>
+    Jio Crypto Services.
+  </footer>
   {%- endblock footer %}
 </div>
 {% endblock %}
 {% block scripts %}
 {{super()}}
 <script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+<script>
+  $(function() {
+    $('#message-success').hide();
+    $('#message-fail').hide();
+    $('.h3.keys').hide();
+    $('#btn-create-wallet').on('click', function() {
+      $.post('/wallet',function(data) {
+        if (data.category === 'success') {
+          $('.h3.keys').show();
+          $('#private-key').html(data.private_key);
+          $('#public-key').html(data.public_key);
+          var btn_close = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
+          $('#message-success').html(data.message);
+          $('#message-success').prepend(btn_close);
+          $('#message-success').show();
+          $('#btn-create-wallet').hide();
+        }
+        if (data.category === 'danger') {
+          $('#message-fail').html(data.message);
+          $('#message-fail').prepend(btn_close);
+          $('#message-fail').show();
+        }
+      });
+    });
+    $('#btn-load-wallet').on('click', function() {
+      $.get('/wallet',function(data) {
+        if (data.category === 'success') {
+          $('.h3.keys').show();
+          $('#private-key').html(data.private_key);
+          $('#public-key').html(data.public_key);
+          var btn_close = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
+          $('#message-success').html(data.message);
+          $('#message-success').prepend(btn_close);
+          $('#message-success').show();
+          $('#btn-load-wallet').hide();
+        }
+        if (data.category === 'danger') {
+          $('#message-fail').html(data.message);
+          $('#message-fail').prepend(btn_close);
+          $('#message-fail').show();
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}
