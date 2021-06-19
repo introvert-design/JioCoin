@@ -152,3 +152,4 @@ fabric.properties
 
 #Passwords & secret keys
 config.py
+private.pem

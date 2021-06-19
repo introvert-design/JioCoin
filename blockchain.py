@@ -11,6 +11,9 @@ MINING_REWARD = 10.0
 
 
 class Blockchain:
+    """
+    Verifies and creates the chain of blocks and list of open transactions.
+    """
     def __init__(self, host, mysql, difficulty=4):
         self.difficulty = difficulty
         self.host = host
@@ -20,9 +23,17 @@ class Blockchain:
         self.load_data()
 
     def __repr__(self):
+        """
+        Returns the list of blocks (blockchain) as a string.
+        :return: string - blockchain
+        """
         return str(self.chain)
 
-    def check_balance(self):
+    def calculate_balance(self):
+        """
+        Calculates the balance of the host or user account.
+        :return: float - balance of the host or user account.
+        """
         balance = 0
         for block in self.chain:
             for transaction in (block.__dict__['transactions']):
@@ -41,6 +52,16 @@ class Blockchain:
         return balance
 
     def add_transactions(self, sender, recipient, amount, signature):
+        """
+        Creates a new transaction, validates the signature of the transaction and
+        adds the transaction to the open transactions list.
+        :param sender: The sender of the transaction.
+        :param recipient: The recipient of the transaction.
+        :param amount: The amount of the transaction.
+        :param signature: The signature of the transaction.
+        :return: boolean - True: if the transaction is successfully added to the open transactions list.
+                           False: if the validation of the transaction signature fails.
+        """
         transaction = Transaction(sender, recipient, amount, signature)
         if Wallet.verify_signature(transaction.__dict__, self.mysql):
             self.open_transactions.append(transaction.__dict__)
@@ -50,9 +71,11 @@ class Blockchain:
             return False
 
     def mine_block(self):
-        if len(self.chain) > 0:
-            if not self.is_valid():
-                return False
+        """
+        Verifies the transactions in the open transactions list, creates a new block
+        and adds the block to the blockchain.
+        :return: None.
+        """
         try:
             previous_hash = self.chain[-1].__dict__['hash']
         except IndexError:
@@ -71,9 +94,13 @@ class Blockchain:
             self.chain.append(block)
             self.open_transactions = []
             self.save_data()
-            return True
 
     def is_valid(self):
+        """
+        Checks the validity of the blocks in the blockchain.
+        :return: boolean - True: if all the blocks in the blockchain are valid.
+                           False: if any of the block in the blockchain is corrupted.
+        """
         for count, block in enumerate(self.chain):
             if count == 0:
                 if hash_block_data(block)[:self.difficulty] != '0' * self.difficulty:
@@ -86,6 +113,10 @@ class Blockchain:
         return True
 
     def load_data(self):
+        """
+        Loads the blockchain and open transactions from the MySQL database.
+        :return: None.
+        """
         blockchain = []
         blockchain_db = Table("blockchain", self.mysql,
                               ("id", "INT", 100),
@@ -119,6 +150,10 @@ class Blockchain:
         self.open_transactions = transactions
 
     def save_data(self):
+        """
+        Saves the blockchain and open transactions to the MySQL database.
+        :return: None.
+        """
         blockchain_db = Table("blockchain", self.mysql,
                               ("id", "INT", 100),
                               ("hash", "VARCHAR", 100),
@@ -148,6 +183,12 @@ class Blockchain:
                                              transaction['signature'])
 
     def delete_invalid_open_transaction(self, transaction):
+        """
+        Deletes a transaction with invalid signature from the open transactions list and from the open_transactions
+        table in the MySQL database.
+        :param transaction: The corrupted transaction with invalid signature.
+        :return: None.
+        """
         self.open_transactions.remove(transaction)
         open_transactions_db = Table("open_transactions", self.mysql,
                                      ("sender", "VARCHAR", 50),

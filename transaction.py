@@ -1,4 +1,7 @@
 class Transaction:
+    """
+    Initializes the instance attributes of a transaction  and returns the transaction as a string.
+    """
     def __init__(self, sender, recipient, amount, signature):
         self.sender = sender
         self.recipient = recipient
@@ -6,4 +9,8 @@ class Transaction:
         self.signature = signature
 
     def __repr__(self):
+        """
+        Returns a dictionary of the Transaction object's attributes in the string format
+        :return: string - transaction attributes
+        """
         return str(self.__dict__)

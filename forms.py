@@ -3,6 +3,9 @@ from wtforms import StringField, FloatField, SubmitField, PasswordField, validat
 
 
 class RegistrationForm(FlaskForm):
+    """
+    Creates a registration form with user name, email, and password as input.
+    """
     name = StringField('Full Name', [
         validators.DataRequired(),
         validators.Length(max=30, message=f'Name must not be longer than 30 characters.')
@@ -24,6 +27,9 @@ class RegistrationForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
+    """
+    Creates a login form with user email and password as input.
+    """
     email = StringField('Email Address', [
         validators.DataRequired(),
         validators.Email()
@@ -35,6 +41,9 @@ class LoginForm(FlaskForm):
 
 
 class TransactionForm(FlaskForm):
+    """
+    Creates a form for transaction with recipient email and amount as inputs.
+    """
     email = StringField('Recipient Email Address', [
         validators.DataRequired(),
         validators.Email()
