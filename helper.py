@@ -23,6 +23,7 @@ def ordered_dict(transactions):
     for transaction in transactions:
         ordered_transaction = OrderedDict([('sender', transaction['sender']),
                                            ('recipient', transaction['recipient']),
-                                           ('amount', transaction['amount'])])
+                                           ('amount', transaction['amount']),
+                                           ('signature', transaction['signature'])])
         ordered_transactions.append(ordered_transaction)
     return ordered_transactions

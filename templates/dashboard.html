@@ -34,9 +34,7 @@ Jio Coin- Dashboard
     <a class="nav-link" href="new_wallet" style="right: 40px;">Wallet</a>
   </div>
   {% block flash %}
-  <div class="container">
-    {{super()}}
-  </div>
+  {{super()}}
   {% endblock %}
   {% block page_content %}
   {% if session['url'] == '/register' %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from flask_bootstrap import Bootstrap
 from passlib.hash import sha256_crypt
@@ -56,8 +56,13 @@ def login_user(email, users, url):
 def register():
     form = RegistrationForm(request.form)
 
-    users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
-                  ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+    users = Table("users", mysql,
+                  ("name", "VARCHAR", 50),
+                  ("email", "VARCHAR", 50),
+                  ("password", "VARCHAR", 100),
+                  ("public_key", "VARCHAR", 2048),
+                  ("has_wallet", "BOOL", "")
+                  )
 
     if form.validate_on_submit():
         name = form.name.data
@@ -85,8 +90,13 @@ def login():
         email = form.email.data
         input_password = form.password.data
 
-        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
-                      ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+        users = Table("users", mysql,
+                      ("name", "VARCHAR", 50),
+                      ("email", "VARCHAR", 50),
+                      ("password", "VARCHAR", 100),
+                      ("public_key", "VARCHAR", 2048),
+                      ("has_wallet", "BOOL", "")
+                      )
 
         user = users.get_one('email', email)
         if user is None:
@@ -117,7 +127,10 @@ def dashboard():
     blockchain = Blockchain(session['email'], mysql)
     balance = blockchain.check_balance()
 
-    return render_template('dashboard.html', session=session, balance=balance, chain=blockchain.chain,
+    return render_template('dashboard.html',
+                           session=session,
+                           balance=balance,
+                           chain=blockchain.chain,
                            open_transactions=blockchain.open_transactions)
 
 
@@ -136,8 +149,13 @@ def transaction():
         recipient = form.email.data
         amount = form.amount.data
 
-        users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50), ("password", "VARCHAR", 100),
-                      ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+        users = Table("users", mysql,
+                      ("name", "VARCHAR", 50),
+                      ("email", "VARCHAR", 50),
+                      ("password", "VARCHAR", 100),
+                      ("public_key", "VARCHAR", 2048),
+                      ("has_wallet", "BOOL", "")
+                      )
 
         user = users.get_one('email', sender)
         if user['has_wallet'] == 0:
@@ -149,8 +167,13 @@ def transaction():
         elif balance < amount:
             flash('Insufficient funds !', 'danger')
         else:
-            blockchain.add_transactions(sender, recipient, amount)
-            flash('Transaction successfully added for mining !', 'success')
+            wallet = Wallet()
+            wallet.load_keys()
+            signature = wallet.sign_transaction(sender, recipient, amount)
+            if blockchain.add_transactions(sender, recipient, amount, signature):
+                flash('Transaction successfully added for mining !', 'success')
+            else:
+                flash('Transaction failed. Signature could not be verified', 'danger')
 
         return redirect(url_for('transaction'))
 
@@ -163,10 +186,9 @@ def mine():
     blockchain = Blockchain(session['email'], mysql)
     if blockchain.mine_block():
         flash('Block successfully mined', 'success')
-        return redirect(url_for('dashboard'))
     else:
         flash('Mining failed.', 'danger')
-        return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/new_wallet', methods=['GET'])
@@ -188,8 +210,13 @@ def create_wallet():
         email = session['email']
 
         if wallet.save_keys(mysql, email):
-            users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50),
-                          ("password", "VARCHAR", 100), ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
+            users = Table("users", mysql,
+                          ("name", "VARCHAR", 50),
+                          ("email", "VARCHAR", 50),
+                          ("password", "VARCHAR", 100),
+                          ("public_key", "VARCHAR", 2048),
+                          ("has_wallet", "BOOL", "")
+                          )
             login_user(email, users, url_for('create_wallet'))
             flash('Wallet created and successfully saved.', 'success')
             return redirect(url_for('load_wallet'))

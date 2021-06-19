@@ -1,6 +1,7 @@
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
-from Crypto.Signature import pkcs1_15
+from Crypto.Signature import pss
+import binascii
 
 from sql_util import Table
 
@@ -20,9 +21,13 @@ class Wallet:
             try:
                 with open('private.pem', mode='wb') as file_out:
                     file_out.write(self.private_key.encode('utf-8'))
-                users = Table("users", mysql, ("name", "VARCHAR", 50), ("email", "VARCHAR", 50),
-                              ("password", "VARCHAR", 100), ("public_key", "VARCHAR", 2048), ("has_wallet", "BOOL", ""))
-                users.update_table(('email', email), ('public_key', self.public_key.encode('utf-8')), ('has_wallet', 1))
+                users = Table("users", mysql,
+                              ("name", "VARCHAR", 50),
+                              ("email", "VARCHAR", 50),
+                              ("password", "VARCHAR", 100),
+                              ("public_key", "VARCHAR", 2048),
+                              ("has_wallet", "BOOL", ""))
+                users.update_table(('email', email), ('public_key', self.public_key), ('has_wallet', 1))
                 return True
             except (IOError, IndexError):
                 return False
@@ -36,14 +41,29 @@ class Wallet:
             return True
         except (IOError, IndexError):
             return False
-    # def sign_transaction(self, transaction):
-    #     hash_transaction = SHA256.new(transaction)
-    #     signature = pkcs1_15.new(self.private_key).sign(hash_transaction)
-    #
-    # def verify_signature(self):
-    #     key = RSA.import_key(open('public_key.der').read())
-    #     h = SHA256.new(message)
-    #     try:
-    #         pkcs1_15.new(key).verify(h, signature)
-    #     except (ValueError, TypeError):
-    #         print("The signature is not valid.")
+
+    def sign_transaction(self, sender, recipient, amount):
+        hash_transaction = SHA256.new((str(sender) + str(recipient) + str(amount)).encode('utf-8'))
+        signature = pss.new(RSA.import_key(self.private_key.encode('utf-8'))).sign(hash_transaction)
+        return binascii.hexlify(signature).decode('ascii')
+
+    @staticmethod
+    def verify_signature(transaction, mysql):
+        users = Table("users", mysql,
+                      ("name", "VARCHAR", 50),
+                      ("email", "VARCHAR", 50),
+                      ("password", "VARCHAR", 100),
+                      ("public_key", "VARCHAR", 2048),
+                      ("has_wallet", "BOOL", ""))
+        user = users.get_one("email", transaction['sender'])
+        public_key = user['public_key']
+        hash_transaction = SHA256.new((str(transaction['sender']) +
+                                       str(transaction['recipient']) +
+                                       str(transaction['amount']))
+                                      .encode('utf-8'))
+        verifier = pss.new(RSA.import_key(public_key.encode('utf-8')))
+        try:
+            verifier.verify(hash_transaction, binascii.unhexlify(transaction['signature']))
+            return True
+        except (ValueError, TypeError):
+            return False

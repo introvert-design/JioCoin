@@ -5,6 +5,7 @@ from transaction import Transaction
 from block import Block
 from helper import hash_block_data, ordered_dict
 from sql_util import Table
+from wallet import Wallet
 
 MINING_REWARD = 10.0
 
@@ -39,10 +40,14 @@ class Blockchain:
                 continue
         return balance
 
-    def add_transactions(self, sender, recipient, amount):
-        transaction = Transaction(sender, recipient, amount)
-        self.open_transactions.append(transaction.__dict__)
-        self.save_data()
+    def add_transactions(self, sender, recipient, amount, signature):
+        transaction = Transaction(sender, recipient, amount, signature)
+        if Wallet.verify_signature(transaction.__dict__, self.mysql):
+            self.open_transactions.append(transaction.__dict__)
+            self.save_data()
+            return True
+        else:
+            return False
 
     def mine_block(self):
         if len(self.chain) > 0:
@@ -52,7 +57,10 @@ class Blockchain:
             previous_hash = self.chain[-1].__dict__['hash']
         except IndexError:
             previous_hash = '0' * 62 + 'x0'
-        self.open_transactions.append(Transaction('Jiocoin', self.host, MINING_REWARD).__dict__)
+        for transaction in self.open_transactions:
+            if not Wallet.verify_signature(transaction, self.mysql):
+                self.delete_invalid_open_transaction(transaction)
+        self.open_transactions.append(Transaction('Jiocoin', self.host, MINING_REWARD, '').__dict__)
         transactions = ordered_dict(self.open_transactions[:])
         block = Block(len(self.chain) + 1, previous_hash, str(time()), transactions)
         while not hash_block_data(block)[:self.difficulty] == '0' * self.difficulty:
@@ -79,34 +87,71 @@ class Blockchain:
 
     def load_data(self):
         blockchain = []
-        blockchain_db = Table("blockchain", self.mysql, ("id", "INT", 100), ("hash", "VARCHAR", 100),
-                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "VARCHAR", 20),
+        blockchain_db = Table("blockchain", self.mysql,
+                              ("id", "INT", 100),
+                              ("hash", "VARCHAR", 100),
+                              ("previous_hash", "VARCHAR", 100),
+                              ("nonce", "INT", 10),
+                              ("timestamp", "VARCHAR", 20),
                               ("transactions", "JSON", ""))
         for row in blockchain_db.get_all_data():
-            block = Block(row['id'], row['previous_hash'], row['timestamp'], loads(row['transactions']),
-                          row['hash'], row['nonce'])
+            block = Block(row['id'],
+                          row['previous_hash'],
+                          row['timestamp'],
+                          loads(row['transactions']),
+                          row['hash'],
+                          row['nonce'])
             blockchain.append(block)
             self.chain = blockchain
 
         transactions = []
-        open_transactions_db = Table("open_transactions", self.mysql, ("sender", "VARCHAR", 50),
-                                     ("recipient", "VARCHAR", 50), ("amount", "FLOAT", 20))
+        open_transactions_db = Table("open_transactions", self.mysql,
+                                     ("sender", "VARCHAR", 50),
+                                     ("recipient", "VARCHAR", 50),
+                                     ("amount", "FLOAT", 20),
+                                     ("signature", "VARCHAR", 2048))
         for tnx in open_transactions_db.get_all_data():
-            transaction = Transaction(tnx['sender'], tnx['recipient'], tnx['amount'])
+            transaction = Transaction(tnx['sender'],
+                                      tnx['recipient'],
+                                      tnx['amount'],
+                                      tnx['signature'])
             transactions.append(transaction.__dict__)
         self.open_transactions = transactions
 
     def save_data(self):
-        blockchain_db = Table("blockchain", self.mysql, ("id", "INT", 100), ("hash", "VARCHAR", 100),
-                              ("previous_hash", "VARCHAR", 100), ("nonce", "INT", 10), ("timestamp", "VARCHAR", 20),
+        blockchain_db = Table("blockchain", self.mysql,
+                              ("id", "INT", 100),
+                              ("hash", "VARCHAR", 100),
+                              ("previous_hash", "VARCHAR", 100),
+                              ("nonce", "INT", 10),
+                              ("timestamp", "VARCHAR", 20),
                               ("transactions", "JSON", ""))
         blockchain_db.delete_all_data()
         for block in self.chain:
-            blockchain_db.insert_data(block.index, block.hash, block.previous_hash, block.nonce, block.timestamp,
+            blockchain_db.insert_data(block.index,
+                                      block.hash,
+                                      block.previous_hash,
+                                      block.nonce,
+                                      block.timestamp,
                                       dumps(block.transactions))
 
-        open_transactions_db = Table("open_transactions", self.mysql, ("sender", "VARCHAR", 50),
-                                     ("recipient", "VARCHAR", 50), ("amount", "FLOAT", 20))
+        open_transactions_db = Table("open_transactions", self.mysql,
+                                     ("sender", "VARCHAR", 50),
+                                     ("recipient", "VARCHAR", 50),
+                                     ("amount", "FLOAT", 20),
+                                     ("signature", "VARCHAR", 2048))
         open_transactions_db.delete_all_data()
         for transaction in self.open_transactions:
-            open_transactions_db.insert_data(transaction['sender'], transaction['recipient'], transaction['amount'])
+            open_transactions_db.insert_data(transaction['sender'],
+                                             transaction['recipient'],
+                                             transaction['amount'],
+                                             transaction['signature'])
+
+    def delete_invalid_open_transaction(self, transaction):
+        self.open_transactions.remove(transaction)
+        open_transactions_db = Table("open_transactions", self.mysql,
+                                     ("sender", "VARCHAR", 50),
+                                     ("recipient", "VARCHAR", 50),
+                                     ("amount", "FLOAT", 20),
+                                     ("signature", "VARCHAR", 2048))
+        open_transactions_db.delete_one("signature", transaction['signature'])
