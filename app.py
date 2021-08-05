@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from flask_bootstrap import Bootstrap
 from passlib.hash import sha256_crypt
@@ -20,6 +20,7 @@ app.config['MYSQL_USER'] = _mysql_user
 app.config['MYSQL_PASSWORD'] = _mysql_password
 app.config['MYSQL_DB'] = 'jiocoin'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
 Bootstrap(app)
 mysql = MySQL(app)

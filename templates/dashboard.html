@@ -9,7 +9,6 @@
 Jio Coin- Dashboard
 {% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
 {{super()}}
 <style>
   .table-bordered > tbody > tr > td {
@@ -25,107 +24,105 @@ Jio Coin- Dashboard
 {% endblock %}
 {% block content %}
 <div class="container" style="max-width: 1400px;">
-  <div class="row">
-    <a class="brand" href="#">
-      <img src="{{url_for('static', filename='images/logo.png')}}" alt="Jio Coin Logo" width="100" height="100">
-    </a>
-    <a class="nav-link" href="logout">Logout</a>
-    <a class="nav-link" href="transaction" style="right: 20px;">Transaction</a>
-    <a class="nav-link" href="new_wallet" style="right: 40px;">Wallet</a>
-  </div>
-  {% block flash %}
-  {{super()}}
-  {% endblock %}
-  {% block page_content %}
-  {% if session['url'] == '/register' %}
-  <h1>Welcome, {{ session['name'] }}</h1>
-  {% elif session['url'] == '/login' %}
-  <h1>Welcome back, {{ session['name'] }}</h1>
-  {% else %}
-  <h1>Hello, {{ session['name'] }}</h1>
-  {% endif %}
-  <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
-  <hr>
-  <h3 class="h3">Jio Coin Blockchain</h3>
-  <button type="button" class="btn btn-primary" id="btn-mine" style="margin-top: 10px;">
-    Mine block
-  </button>
-  <button type="button" class="btn btn-primary" id="btn-sync" style="margin-top: 10px;">
-    Sync tables
-  </button>
-  <table id="table"
-         data-height="560"
-         data-toggle="table"
-         data-show-pagination-switch="true"
-         data-show-fullscreen="true"
-         data-pagination="true">
-    <thead>
-      <tr>
-        <th scope="col" rowspan="2" class="text-center" data-valign="middle">Block#</th>
-        <th scope="col" rowspan="2" class="text-center" data-valign="middle">Hash</th>
-        <th scope="col" colspan="3" class="text-center">Transactions</th>
-      </tr>
-      <tr>
-        <th scope="col">Sender</th>
-        <th scope="col">Recipient</th>
-        <th scope="col">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for block in chain %}
-      {% set tnxs = block.__dict__['transactions'] %}
-      {% set count = loop.index %}
-      {% if count%2 == 0 %}
-        {% set bgcolor = "#ddd" %}
-      {% else %}
-        {% set bgcolor = "#fff" %}
-      {% endif %}
-      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }};">
-        <td rowspan="{{ tnxs|length }}" style="border-left-color: #ddd;">{{ block.index }}</td>
-        <td rowspan="{{ tnxs|length }}" class="text-left">{{ block.hash }}</td>
-        <td>{{ tnxs[0]['sender'] }}</td>
-        <td>{{ tnxs[0]['recipient'] }}</td>
-        <td style="border-right-color: #ddd;">{{ tnxs[0]['amount'] }}</td>
-      </tr>
-      {% for tnx in tnxs[1:] %}
-      <tr class="tr-class-{{ count }}" style="background-color: {{ bgcolor }};">
-        <td>{{ tnx['sender'] }}</td>
-        <td>{{ tnx['recipient'] }}</td>
-        <td style="border-right-color: #ddd;">{{ tnx['amount'] }}</td>
-      </tr>
+  <div class="content" style="min-height: 98vh;">
+    <div class="row">
+      <a class="brand" href="#">
+        <img src="{{url_for('static', filename='images/logo.png')}}" alt="Jio Coin Logo" width="100" height="100">
+      </a>
+      <a class="nav-link" href="logout">Logout</a>
+      <a class="nav-link" href="transaction" style="right: 20px;">Transaction</a>
+      <a class="nav-link" href="new_wallet" style="right: 40px;">Wallet</a>
+    </div>
+    {% block flash %}
+    {{super()}}
+    {% endblock %}
+    {% block page_content %}
+    {% if session['url'] == '/register' %}
+    <h1>Welcome, {{ session['name'] }}</h1>
+    {% elif session['url'] == '/login' %}
+    <h1>Welcome back, {{ session['name'] }}</h1>
+    {% else %}
+    <h1>Hello, {{ session['name'] }}</h1>
+    {% endif %}
+    <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
+    <hr>
+    <h3 class="h3">Jio Coin Blockchain</h3>
+    <button type="button" class="btn btn-primary" id="btn-mine" style="margin-top: 10px;">
+      Mine block
+    </button>
+    <button type="button" class="btn btn-primary" id="btn-sync" style="margin-top: 10px;">
+      Sync tables
+    </button>
+    <div id="accordion" class="panel-group" style="margin-top: 20px;">
+      {% for block in chain %}
+        {% set tnxs = block.__dict__['transactions'] %}
+        {% set count = loop.index %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="row">
+            <h4 class="col-md-6 panel-title">
+              <a href="#collapse{{ count }}" data-toggle="collapse" data-parent="#accordion">Block #{{ block.index }}</a>
+            </h4>
+            <div class="col-md-6 text-right">Hash: <b>{{ block.hash }}</b></div>
+          </div>
+        </div>
+        <div id="collapse{{ count }}" class="panel-collapse collapse">
+          <div class="panel-body">
+            {% for tnx in tnxs[0:] %}
+            <div class="well">
+              <div class="row">
+                <div class="col-md-2">
+                  Tnx <b>#{{ loop.index }}</b>
+                </div>
+                <div class="col-md-4">
+                  Sender: {{ tnx['sender'] }}
+                </div>
+                <div class="col-md-4">
+                  Recipient: {{ tnx['recipient'] }}
+                </div>
+                <div class="col-md-2">
+                  Amount: {{ tnx['amount'] }}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
       {% endfor %}
-    {% endfor %}
-    </tbody>
-  </table>
-  <hr>
-  <h3 class="h3">Open transactions</h3>
-  <table id="table-open-transactions"
-         data-height="320"
-         data-toggle="table"
-         data-show-pagination-switch="true"
-         data-show-fullscreen="true"
-         data-pagination="true">
-    <thead>
-      <tr>
-        <th scope="col" class="text-center">Tnx#</th>
-        <th scope="col" class="text-center">Sender</th>
-        <th scope="col" class="text-center">Recipient</th>
-        <th scope="col" class="text-center">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for transaction in open_transactions %}
-      {% set count = loop.index %}
-      <tr class="tr-class-{{ count }}">
-        <td style="border-left-color: #ddd;">{{ count }}</td>
-        <td class="text-left">{{ transaction.sender }}</td>
-        <td class="text-left">{{ transaction.recipient }}</td>
-        <td class="text-left" style="border-right-color: #ddd;">{{ transaction.amount }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  <hr>
+    </div>
+    <hr>
+    <h3 class="h3">Open transactions</h3>
+    <div class="table-responsive">
+      <table class="table table-striped" id="table-open-transactions">
+        <thead>
+          <tr>
+            <th scope="col" class="text-center">Tnx#</th>
+            <th scope="col" class="text-center">Sender</th>
+            <th scope="col" class="text-center">Recipient</th>
+            <th scope="col" class="text-center">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for transaction in open_transactions %}
+          {% set count = loop.index %}
+          <tr class="tr-class-{{ count }}">
+            <td>{{ count }}</td>
+            <td class="text-left">{{ transaction.sender }}</td>
+            <td class="text-left">{{ transaction.recipient }}</td>
+            <td class="text-left">{{ transaction.amount }}</td>
+          </tr>
+        {% endfor %}
+        {% if open_transactions|length == 0 %}
+        <tr>
+          <td class="text-center" colspan="4">No Open Transactions</td>
+        </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <hr>
+  </div>
   {% endblock %}
   {%- block footer %}
   <footer class="mt-5 text-muted">
@@ -134,11 +131,10 @@ Jio Coin- Dashboard
     Jio Crypto Services.
   </footer>
   {%- endblock footer %}
-</div>
+  </div>
 {% endblock %}
 {% block scripts %}
 {{super()}}
-<script src="https://unpkg.com/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
 <script>
   $(function() {
     $('#btn-mine').on('click', function() {
