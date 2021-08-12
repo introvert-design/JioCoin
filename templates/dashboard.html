@@ -34,6 +34,7 @@ Jio Coin- Dashboard
       <a class="nav-link" href="new_wallet" style="right: 40px;">Wallet</a>
     </div>
     {% block flash %}
+    <div id="res"></div>
     {{super()}}
     {% endblock %}
     {% block page_content %}
@@ -44,14 +45,19 @@ Jio Coin- Dashboard
     {% else %}
     <h1>Hello, {{ session['name'] }}</h1>
     {% endif %}
-    <h3 class="h3 mb-3 fw-normal">Current Balance: {{ '%.4f'|format(balance|float) }} <span class="h4">JIO</span></h3>
+    <div id="balance">
+      <h3 class="h3 mb-3 fw-normal">
+        Current Balance: {{ '%.4f'|format(balance|float) }}
+        <span class="h4">JIO</span>
+      </h3>
+    </div>
     <hr>
     <h3 class="h3">Jio Coin Blockchain</h3>
     <button type="button" class="btn btn-primary" id="btn-mine" style="margin-top: 10px;">
       Mine block
     </button>
-    <button type="button" class="btn btn-primary" id="btn-sync" style="margin-top: 10px;">
-      Sync tables
+    <button type="button" class="btn btn-primary" id="btn-resolve" style="margin-top: 10px;">
+      Resolve conflicts
     </button>
     <div id="accordion" class="panel-group" style="margin-top: 20px;">
       {% for block in chain %}
@@ -60,10 +66,10 @@ Jio Coin- Dashboard
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="row">
-            <h4 class="col-md-6 panel-title">
+            <h4 class="col-md-4 panel-title">
               <a href="#collapse{{ count }}" data-toggle="collapse" data-parent="#accordion">Block #{{ block.index }}</a>
             </h4>
-            <div class="col-md-6 text-right">Hash: <b>{{ block.hash }}</b></div>
+            <div class="col-md-8 text-right">Hash: <b>{{ block.hash }}</b></div>
           </div>
         </div>
         <div id="collapse{{ count }}" class="panel-collapse collapse">
@@ -93,7 +99,7 @@ Jio Coin- Dashboard
     </div>
     <hr>
     <h3 class="h3">Open transactions</h3>
-    <div class="table-responsive">
+    <div class="table-responsive" id="open-transaction">
       <table class="table table-striped" id="table-open-transactions">
         <thead>
           <tr>
@@ -138,13 +144,19 @@ Jio Coin- Dashboard
 <script>
   $(function() {
     $('#btn-mine').on('click', function() {
-      $.post('/mine',function(data) {
-        window.location.reload();
+      $.post('/mine',function(res) {
+        $('#balance').load(location.href+' #balance>*','');
+        $('#accordion').load(location.href+' #accordion>*','');
+        $('#open-transaction').load(location.href+' #open-transaction>*','');
+        $('#res').empty().append(res);
       });
     });
-    $('#btn-sync').on('click', function() {
-      $.get('/dashboard',function(data) {
-        window.location.reload();
+    $('#btn-resolve').on('click', function() {
+      $.post('/resolve-conflicts',function(res) {
+        $('#res').empty().append(res);
+        $('#balance').load(location.href+' #balance>*','');
+        $('#accordion').load(location.href+' #accordion>*','');
+        $('#open-transaction').load(location.href+' #open-transaction>*','');
       });
     });
   });

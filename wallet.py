@@ -23,10 +23,12 @@ class Wallet:
         key = RSA.generate(2048)
         self.public_key = key.publickey().export_key().decode('utf-8')
         self.private_key = key.export_key().decode('utf-8')
+        return self.public_key
 
-    def save_keys(self, mysql, email):
+    def save_keys(self, mysql, email, port):
         """
         Saves the private key to a separate file and adds public key to the users table in mysql database.
+        :param port: Port through which node is accessed.
         :param mysql: Bound MySQL connection object to connect to the server to update the users table.
         :param email: The email of the user used to identify the row to be modified.
         :return: boolean - True: if saves the key pair successfully.
@@ -34,27 +36,31 @@ class Wallet:
         """
         if self.private_key is not None and self.public_key is not None:
             try:
-                with open('private.pem', mode='wb') as file_out:
+                with open(f'private_{port}.pem', mode='wb') as file_out:
                     file_out.write(self.private_key.encode('utf-8'))
                 users = Table("users", mysql,
-                              ("name", "VARCHAR", 50),
-                              ("email", "VARCHAR", 50),
-                              ("password", "VARCHAR", 100),
-                              ("public_key", "VARCHAR", 2048),
-                              ("has_wallet", "BOOL", ""))
+                              ("email", "VARCHAR", 50, "UNIQUE"),
+                              ("name", "VARCHAR", 50, ""),
+                              ("node", "VARCHAR", 80, "UNIQUE"),
+                              ("password", "VARCHAR", 100, ""),
+                              ("public_key", "VARCHAR", 2048, ""),
+                              ("has_wallet", "BOOL", "", ""),
+                              ("db_created", "BOOL", "", "")
+                              )
                 users.update_table(('email', email), ('public_key', self.public_key), ('has_wallet', 1))
                 return True
             except (IOError, IndexError):
                 return False
 
-    def load_keys(self):
+    def load_keys(self, port):
         """
         Loads the private key from the local file and generates the public key from the private key.
+        :param port: Port through which node is accessed.
         :return: boolean - True: if loads the key pair successfully.
                            False: if fails to load the key.
         """
         try:
-            with open('private.pem', mode='r') as file_in:
+            with open(f'private_{port}.pem', mode='r') as file_in:
                 key = RSA.import_key(file_in.read())
             self.private_key = key.export_key().decode('utf-8')
             self.public_key = key.publickey().export_key().decode('utf-8')
@@ -84,11 +90,14 @@ class Wallet:
                            False: if the signature is not valid.
         """
         users = Table("users", mysql,
-                      ("name", "VARCHAR", 50),
-                      ("email", "VARCHAR", 50),
-                      ("password", "VARCHAR", 100),
-                      ("public_key", "VARCHAR", 2048),
-                      ("has_wallet", "BOOL", ""))
+                      ("email", "VARCHAR", 50, "UNIQUE"),
+                      ("name", "VARCHAR", 50, ""),
+                      ("node", "VARCHAR", 80, "UNIQUE"),
+                      ("password", "VARCHAR", 100, ""),
+                      ("public_key", "VARCHAR", 2048, ""),
+                      ("has_wallet", "BOOL", "", ""),
+                      ("db_created", "BOOL", "", "")
+                      )
         user = users.get_one("email", transaction['sender'])
         public_key = user['public_key']
         hash_transaction = SHA256.new((str(transaction['sender']) +

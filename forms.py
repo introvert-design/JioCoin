@@ -15,6 +15,10 @@ class RegistrationForm(FlaskForm):
         validators.Length(max=50, message=f'Email address must not be longer than 50 characters.'),
         validators.Email()
     ])
+    node = StringField('Node Address', [
+        validators.DataRequired(),
+        validators.Length(max=80, message=f'Node address must not be longer than 80 characters.')
+    ])
     password = PasswordField('Password', [
         validators.DataRequired(),
         validators.Length(min=8, max=20, message=f'Password must be between 8 and 20 characters long.'),

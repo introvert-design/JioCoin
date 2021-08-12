@@ -37,7 +37,8 @@ def ordered_dict(transactions):
     """
     ordered_transactions = []
     for transaction in transactions:
-        ordered_transaction = OrderedDict([('sender', transaction['sender']),
+        ordered_transaction = OrderedDict([('index', transaction['index']),
+                                           ('sender', transaction['sender']),
                                            ('recipient', transaction['recipient']),
                                            ('amount', transaction['amount']),
                                            ('signature', transaction['signature'])])

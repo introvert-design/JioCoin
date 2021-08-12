@@ -2,7 +2,8 @@ class Transaction:
     """
     Initializes the instance attributes of a transaction  and returns the transaction as a string.
     """
-    def __init__(self, sender, recipient, amount, signature):
+    def __init__(self, index, sender, recipient, amount, signature):
+        self.index = index
         self.sender = sender
         self.recipient = recipient
         self.amount = amount

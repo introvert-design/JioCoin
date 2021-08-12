@@ -26,6 +26,7 @@ Jio Coin- Create Account
     {{ wtf.form_errors(form, hiddens="only") }}
     {{ wtf.form_field(form.name, class='form-control', placeholder='John Doe') }}
     {{ wtf.form_field(form.email, class='form-control', placeholder='john.doe@example.com') }}
+    {{ wtf.form_field(form.node, class='form-control', placeholder='http://127.0.0.1:5000') }}
     {{ wtf.form_field(form.password, class='form-control', placeholder='Password (8 - 20 characters)') }}
     {{ wtf.form_field(form.confirm, class='form-control', placeholder='Retype password') }}
     <div class="d-grid gap-2">
